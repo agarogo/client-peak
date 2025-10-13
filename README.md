@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<h1 align="center">Unicorn</h1>
+<h3 align="center">ПРОЕКТ "?????"</h3>
+Наш проект ?? решает проблему 
+## Описание работы прототипа
 
-## Getting Started
 
-First, run the development server:
+## Технологии
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+# Языки програмирования: 
+-TypeScript
+-Python
+# Фреймворки: 
+-ReactJS
+-JWT
+-PassportJS
+-Multer
+-Axios
+-FastAPI
+-Celery
+-Docker Compose
+-SCSS
+-TailwindCSS
+# Базы данных: 
+-postgreSQL
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Состав Команды
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+<h5>Менеджер - Ядрихинский Александр</h5>
+<h3></h3>
+<h5>Дизайнер - Фролова Ксения</h5>
+<h3></h3>
+<h5>Разработчик - Голиков Александр</h5>
+<h3></h3>
+<h5>Разработчик - Максимов Сергей</h5>
+<h3></h3>
+<h5>Разработчик - Иванов Алексей</h5>
+<h3></h3>
 
-## Learn More
+# Инструкция по установке
 
-To learn more about Next.js, take a look at the following resources:
+React JS - это JavaScript-библиотека для разработки пользовательского интерфейса. Чтобы составить первое впечатление о React, зайдите на главную страницу или во введение.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Шаг 1: Установка node.js
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- перейти на сайт [Node.org](https://nodejs.org/en) и скачать LTS файл
 
-## Deploy on Vercel
+## Шаг 2: Установка PNPM
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Чтобы установить PNPM, вам нужно перейти по ссылке и в терминале установить pnpm:
+- [pnpm.io](https://pnpm.io/installation)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Шаг 3: Запустите VisialStudioCode
+- загрузить файлы и открыть папки в VisialStudioCode
+
+## Шаг 4: Откройте терминал и введите 
+
+- pnpm i
+
+## Шаг 5: Действовать по README.md
+
+- в папке Back 
+- в папке cli в терминале написать (pnpm start)
