@@ -2,7 +2,9 @@ import React from "react";
 import { SafeAreaView, View, Text, Pressable } from "react-native";
 import { clearToken } from "../storage/auth";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { RootStackParamList } from "../../App";
+import "../../global.css";
 
 type P = NativeStackScreenProps<RootStackParamList, "Home">;
 
@@ -28,8 +30,13 @@ function MenuButton({ title, onPress }: { title: string; onPress: () => void }) 
 
 export default function HomeScreen({ navigation }: P) {
   const logout = async () => {
-    await clearToken();
-    navigation.reset({ index: 0, routes: [{ name: "Login" }] });
+    await AsyncStorage.removeItem("auth_token");
+    // Было: routes: [{ name: "Login" }]
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Auth" }],
+    }); 
+
   };
 
   return (
@@ -43,7 +50,7 @@ export default function HomeScreen({ navigation }: P) {
       {/* центр меню */}
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         <MenuButton title="мой лес" onPress={() => {}} />
-        <MenuButton title="игры" onPress={() => {}} />
+        <MenuButton title="игры" onPress={() => navigation.navigate("GamesMenu")} />
         <MenuButton title="магазин" onPress={() => {}} />
         <Text onPress={logout} style={{ marginTop: 20, textDecorationLine: "underline" }}>
           выйти
