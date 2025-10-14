@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 // src/screens/QuizScreen.tsx
+=======
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
@@ -17,13 +20,26 @@ import {
   useFocusEffect,
 } from "@react-navigation/native";
 
+<<<<<<< HEAD
+=======
+// Подключаем JSON с вопросами
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
 const rawQuiz: any = require("../../assets/data/eco_quiz_100.json");
 
 type RootStackParamList = {
   Quiz: { lives?: number; timePerQuestionMs?: number; limit?: number } | undefined;
 };
 
+<<<<<<< HEAD
 type Question = { q: string; options: string[]; correctIndex: number };
+=======
+type Question = {
+  q: string;
+  options: string[];
+  correctIndex: number;
+};
+
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
 type RawItem = { q: string; correct: string; wrong: string[] };
 
 const BG = "#D7F7C8";
@@ -33,6 +49,7 @@ const NEUTRAL = "#222";
 const CARD = "#ffffff";
 
 const DEFAULT_LIVES = 3;
+<<<<<<< HEAD
 const DEFAULT_TIME_PER_Q_MS = 0;
 const DEFAULT_LIMIT = 10;
 
@@ -40,6 +57,17 @@ const DEFAULT_LIMIT = 10;
 const RAW: RawItem[] = (rawQuiz as RawItem[]).filter(
   (i) => i && i.q && i.correct && Array.isArray(i.wrong) && i.wrong.length === 3
 );
+=======
+const DEFAULT_TIME_PER_Q_MS = 0; // 0 = без таймера
+const DEFAULT_LIMIT = 10;
+
+// --- helpers ---------------------------------------------------------------
+
+const RAW: RawItem[] = (rawQuiz as RawItem[]).filter(
+  (i) => i && i.q && i.correct && Array.isArray(i.wrong) && i.wrong.length === 3
+);
+
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
 function shuffle<T>(arr: T[], seed?: number): T[] {
   const a = arr.slice();
   let rand = seed ?? Math.random();
@@ -54,17 +82,29 @@ function shuffle<T>(arr: T[], seed?: number): T[] {
   }
   return a;
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
 function pickRandom<T>(arr: T[], n: number, seed?: number): T[] {
   const shuffled = shuffle(arr, seed);
   return shuffled.slice(0, Math.min(n, arr.length));
 }
 
+<<<<<<< HEAD
+=======
+// --- компонент -------------------------------------------------------------
+
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
 export default function QuizScreen() {
   const nav = useNavigation<any>();
   const route = useRoute<RouteProp<RootStackParamList, "Quiz">>();
   const { width: W } = Dimensions.get("window");
 
+<<<<<<< HEAD
   // state
+=======
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
   const [questions, setQuestions] = useState<Question[]>([]);
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -79,7 +119,11 @@ export default function QuizScreen() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const resumeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+<<<<<<< HEAD
   // сборка вопросов
+=======
+  // Сборка вопросов (рандом каждого варианта + выбор N)
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
   const buildQuestions = useCallback((seed: number, limit: number): Question[] => {
     const all: Question[] = RAW.map((it, i) => {
       const options = shuffle([it.correct, ...it.wrong], seed + i);
@@ -88,6 +132,7 @@ export default function QuizScreen() {
     });
     return pickRandom(all, limit, seed + 999);
   }, []);
+<<<<<<< HEAD
   const runIdRef = useRef(0);
 
   const resetQuiz = useCallback(() => {
@@ -112,6 +157,38 @@ export default function QuizScreen() {
     setPaused(false);
   }, [buildQuestions, route.params]);
 
+=======
+
+  const runIdRef = useRef(0); // гарантированный новый сид при каждом ресете
+
+  // Единая функция сброса викторины (новый набор вопросов)
+  const resetQuiz = useCallback(() => {
+  // стоп таймеры до перестройки
+  if (timerRef.current) clearInterval(timerRef.current);
+  timerRef.current = null;
+  if (resumeTimerRef.current) clearInterval(resumeTimerRef.current);
+  resumeTimerRef.current = null;
+
+  // гарантированно новый сид
+  runIdRef.current += 1;
+  const seed = Date.now() + runIdRef.current + Math.floor(Math.random() * 1e9);
+  const limit = route.params?.limit ?? DEFAULT_LIMIT;
+  const qs = buildQuestions(seed, limit);
+
+  setQuestions(qs);
+  setIdx(0);
+  setScore(0);
+  setLives(route.params?.lives ?? DEFAULT_LIVES);
+  setSelected(null);
+  setLocked(false);
+  setTimeLeftMs(route.params?.timePerQuestionMs ?? DEFAULT_TIME_PER_Q_MS);
+  setCountdown(null);
+  setPaused(false);
+}, [buildQuestions, route.params]);
+
+
+  // Генерация при входе на экран
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
   useFocusEffect(
     useCallback(() => {
       resetQuiz();
@@ -127,7 +204,11 @@ export default function QuizScreen() {
   const progress = total ? Math.min(100, Math.round(((idx + 1) / total) * 100)) : 0;
   const timePerQuestionMs = route.params?.timePerQuestionMs ?? DEFAULT_TIME_PER_Q_MS;
 
+<<<<<<< HEAD
   // таймер
+=======
+  // Таймер вопроса (если включён)
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
   useEffect(() => {
     if (!q || paused || timePerQuestionMs <= 0) return;
 
@@ -208,13 +289,20 @@ export default function QuizScreen() {
     if (lives <= 0) setPaused(true);
   }, [lives]);
 
+<<<<<<< HEAD
   // --- UI helpers
+=======
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
   const optionStyle = (i: number) => {
     const isSelected = selected === i;
     const isCorrect = q && i === q.correctIndex;
     const showResult = selected !== null;
 
+<<<<<<< HEAD
     let borderColor = "#e7e7e7";
+=======
+    let borderColor = "#ddd";
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
     let bg = CARD;
     let text = NEUTRAL;
 
@@ -234,19 +322,39 @@ export default function QuizScreen() {
         text = "#8b2f2f";
       }
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
     return { container: { borderColor, backgroundColor: bg }, text: { color: text } };
   };
 
   const ProgressBar = () => (
+<<<<<<< HEAD
     <View style={styles.progressBg}>
       <View style={[styles.progressFg, { width: `${progress}%` }]} />
+=======
+    <View style={{ width: "100%", height: 10, backgroundColor: "#cfe9d2", borderRadius: 999 }}>
+      <View
+        style={{
+          width: `${progress}%`,
+          height: "100%",
+          backgroundColor: ACCENT,
+          borderRadius: 999,
+        }}
+      />
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
     </View>
   );
 
   const HUD = () => (
+<<<<<<< HEAD
     <View style={styles.hudSheet}>
       <View style={{ height: 12 }} />
 
+=======
+    <View style={styles.hud}>
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
       <Text style={styles.hudText}>Баллы: {score}</Text>
       <Text style={styles.hudText}>Жизни: {lives}</Text>
       <Text style={styles.hudText}>
@@ -258,18 +366,28 @@ export default function QuizScreen() {
     </View>
   );
 
+<<<<<<< HEAD
   if (!q) {
     return (
       <SafeAreaView style={[styles.screen, { alignItems: "center", justifyContent: "center" }]}>
+=======
+  if (!q)
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
         <ActivityIndicator />
         <Text style={{ marginTop: 12 }}>Загружаем вопросы…</Text>
       </SafeAreaView>
     );
+<<<<<<< HEAD
   }
+=======
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
 
   const isFinished = idx + 1 >= total && paused;
   const isGameOver = lives <= 0;
 
+<<<<<<< HEAD
   const letters = ["A", "B", "C", "D"];
 
   return (
@@ -323,6 +441,40 @@ export default function QuizScreen() {
       </View>
 
       {/* модалка паузы / результата */}
+=======
+  return (
+    <SafeAreaView style={styles.container}>
+      <HUD />
+      <Pressable onPress={togglePause} style={styles.menuBtn}>
+        <Text style={{ fontSize: 22 }}>≡</Text>
+      </Pressable>
+      <View style={{ paddingHorizontal: 16, marginTop: 8 }}>
+        <ProgressBar />
+      </View>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+        <View style={[styles.card, { width: "100%" }]}>
+          <Text style={styles.qText}>{q.q}</Text>
+          <View style={{ height: 12 }} />
+          {q.options.map((opt, i) => {
+            const s = optionStyle(i);
+            return (
+              <Pressable
+                key={i}
+                onPress={() => choose(i)}
+                disabled={locked || paused}
+                style={({ pressed }) => [
+                  styles.option,
+                  s.container,
+                  pressed && { opacity: 0.85, transform: [{ scale: 0.996 }] },
+                ]}
+              >
+                <Text style={[styles.optionText, s.text]}>{opt}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </ScrollView>
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
       {(paused || countdown !== null) && (
         <View style={styles.overlay}>
           <View style={styles.modalCard}>
@@ -379,6 +531,7 @@ export default function QuizScreen() {
   );
 }
 
+<<<<<<< HEAD
 // ---- styles
 const RADIUS = 24;
 const styles = StyleSheet.create({
@@ -427,10 +580,28 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
 
+=======
+// --- styles ------------------------------------------------------
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: BG },
+  hud: {
+    position: "absolute",
+    left: 16,
+    top: 90,
+    zIndex: 20,
+    flexDirection: "row",
+    gap: 14,
+    alignItems: "center",
+  },
+  hudText: { fontSize: 16, color: "#0f3c25", fontWeight: "600" },
+  menuBtn: { position: "absolute", right: 16, top: 80, padding: 10, zIndex: 10 },
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
   card: {
     backgroundColor: CARD,
     borderRadius: 18,
     padding: 16,
+<<<<<<< HEAD
     marginTop: 70, // 🆕 отступ между HUD (вопрос: 1/10) и текстом вопроса
   },
 
@@ -471,6 +642,23 @@ const styles = StyleSheet.create({
   },
   bulletText: { fontWeight: "700", color: "#333" },
 
+=======
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  qText: { fontSize: 20, fontWeight: "700", color: NEUTRAL, lineHeight: 26 },
+  option: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginTop: 10,
+  },
+  optionText: { fontSize: 16, lineHeight: 22 },
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.35)",
@@ -497,6 +685,7 @@ const styles = StyleSheet.create({
     color: NEUTRAL,
     textAlign: "center",
   },
+<<<<<<< HEAD
   modalText: {
     fontSize: 16,
     color: "#333",
@@ -504,6 +693,9 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginTop: 6,           // интервалы между строками в модалке
   },
+=======
+  modalText: { fontSize: 16, color: "#333", textAlign: "center" },
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
 });
 
 function btnStyle(variant: "solid" | "outline" = "solid") {
@@ -519,5 +711,12 @@ function btnStyle(variant: "solid" | "outline" = "solid") {
   } as const;
 }
 function btnTextStyle(variant: "solid" | "outline" = "solid") {
+<<<<<<< HEAD
   return { color: variant === "solid" ? "#fff" : NEUTRAL, fontWeight: "700" } as const;
+=======
+  return {
+    color: variant === "solid" ? "#fff" : NEUTRAL,
+    fontWeight: "700",
+  } as const;
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
 }

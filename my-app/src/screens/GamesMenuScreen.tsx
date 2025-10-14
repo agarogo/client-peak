@@ -38,6 +38,7 @@ function GameTile({ title, onPress, bg = "#bfe5b4" }: TileProps) {
 export default function GamesMenuScreen() {
   const nav = useNavigation<any>();
 
+<<<<<<< HEAD
   return (
     <SafeAreaView style={styles.safe}>
         {/* аватар справа сверху (как в остальных экранах) */}
@@ -56,6 +57,12 @@ export default function GamesMenuScreen() {
             <GameTile title="Отсортируй мусор" onPress={() => nav.navigate("CatchGame")} />
             <GameTile title="Викторина" onPress={() => nav.navigate("Quiz")} bg="#cfe0ff" />
         </View>
+=======
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <Pill title="Отсортируй мусор" onPress={() => nav.navigate("CatchGame")} />
+        <Pill title="Викторина" onPress={() => nav.navigate("Quiz")} />
+      </View>
+>>>>>>> 25327e769cd8d83175f1704ee5b46f1e218eaaea
     </SafeAreaView>
   );
 }
