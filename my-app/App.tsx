@@ -5,6 +5,8 @@ import { View, ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import AuthScreen from "./src/screens/AuthScreen";
 import HomeScreen from "./src/screens/HomeScreen";
+import GamesMenuScreen from "./src/screens/GamesMenuScreen";
+import CatchGameScreen from "./src/screens/CatchGameScreen";
 
 export type RootStackParamList = {
   Auth: undefined;
@@ -43,6 +45,8 @@ export default function App() {
       >
         <Stack.Screen name="Auth" component={AuthScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="GamesMenu" component={GamesMenuScreen} />
+        <Stack.Screen name="CatchGame" component={CatchGameScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
