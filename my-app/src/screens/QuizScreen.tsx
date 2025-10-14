@@ -1,5 +1,4 @@
-// QuizScreen.tsx
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -10,19 +9,24 @@ import {
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import {
+  useNavigation,
+  useRoute,
+  RouteProp,
+  useFocusEffect,
+} from "@react-navigation/native";
 
+// Подключаем JSON с вопросами
 const rawQuiz: any = require("../../assets/data/eco_quiz_100.json");
 
 type RootStackParamList = {
-  // quizTxt больше не нужен; оставим только настройки жизней/таймера
-  Quiz: { lives?: number; timePerQuestionMs?: number } | undefined;
+  Quiz: { lives?: number; timePerQuestionMs?: number; limit?: number } | undefined;
 };
 
 type Question = {
   q: string;
-  options: string[];      // перемешанные варианты
-  correctIndex: number;   // индекс правильного в options
+  options: string[];
+  correctIndex: number;
 };
 
 type RawItem = { q: string; correct: string; wrong: string[] };
@@ -35,8 +39,13 @@ const CARD = "#ffffff";
 
 const DEFAULT_LIVES = 3;
 const DEFAULT_TIME_PER_Q_MS = 0; // 0 = без таймера
+const DEFAULT_LIMIT = 10;
 
 // --- helpers ---------------------------------------------------------------
+
+const RAW: RawItem[] = (rawQuiz as RawItem[]).filter(
+  (i) => i && i.q && i.correct && Array.isArray(i.wrong) && i.wrong.length === 3
+);
 
 function shuffle<T>(arr: T[], seed?: number): T[] {
   const a = arr.slice();
@@ -53,30 +62,10 @@ function shuffle<T>(arr: T[], seed?: number): T[] {
   return a;
 }
 
-// Собираем вопросы один раз из JSON (детерминированно перемешаем по индексу)
-const RAW: RawItem[] = (rawQuiz as RawItem[]).filter(
-  (i) => i && i.q && i.correct && Array.isArray(i.wrong) && i.wrong.length === 3
-);
-
-function buildQuestions(): Question[] {
-  return RAW.map((it, idx) => {
-    const opts = [it.correct, ...it.wrong];
-    const options = shuffle(opts, idx + 1);
-    const correctIndex = options.indexOf(it.correct);
-    return { q: it.q, options, correctIndex };
-  });
-}
-const ALL_QUESTIONS: Question[] = buildQuestions();
-
-// 🔢 выбираем случайные N вопросов из всех
-const QUESTIONS_LIMIT = 10; // ← поменяй число как хочешь
-function pickRandom<T>(arr: T[], n: number): T[] {
-  const shuffled = arr.slice().sort(() => Math.random() - 0.5);
+function pickRandom<T>(arr: T[], n: number, seed?: number): T[] {
+  const shuffled = shuffle(arr, seed);
   return shuffled.slice(0, Math.min(n, arr.length));
 }
-
-const SELECTED_QUESTIONS = pickRandom(ALL_QUESTIONS, QUESTIONS_LIMIT);
-
 
 // --- компонент -------------------------------------------------------------
 
@@ -85,28 +74,75 @@ export default function QuizScreen() {
   const route = useRoute<RouteProp<RootStackParamList, "Quiz">>();
   const { width: W } = Dimensions.get("window");
 
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [countdown, setCountdown] = useState<number | null>(null); // 3-2-1 при резюме
-  const [tick, setTick] = useState(0); // форс-рендер
-  const [score, setScore] = useState(0); // зелёные баллы
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [score, setScore] = useState(0);
   const [lives, setLives] = useState(route.params?.lives ?? DEFAULT_LIVES);
-  const [idx, setIdx] = useState(0); // текущий вопрос
   const [selected, setSelected] = useState<number | null>(null);
-  const [locked, setLocked] = useState(false); // анти-спам
-  const [timeLeftMs, setTimeLeftMs] = useState(route.params?.timePerQuestionMs ?? DEFAULT_TIME_PER_Q_MS);
+  const [locked, setLocked] = useState(false);
+  const [timeLeftMs, setTimeLeftMs] = useState(
+    route.params?.timePerQuestionMs ?? DEFAULT_TIME_PER_Q_MS
+  );
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const resumeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // используем локальный массив вопросов
-  const questions = SELECTED_QUESTIONS;
-  const q = questions[idx];
+  // Сборка вопросов (рандом каждого варианта + выбор N)
+  const buildQuestions = useCallback((seed: number, limit: number): Question[] => {
+    const all: Question[] = RAW.map((it, i) => {
+      const options = shuffle([it.correct, ...it.wrong], seed + i);
+      const correctIndex = options.indexOf(it.correct);
+      return { q: it.q, options, correctIndex };
+    });
+    return pickRandom(all, limit, seed + 999);
+  }, []);
 
+  const runIdRef = useRef(0); // гарантированный новый сид при каждом ресете
+
+  // Единая функция сброса викторины (новый набор вопросов)
+  const resetQuiz = useCallback(() => {
+  // стоп таймеры до перестройки
+  if (timerRef.current) clearInterval(timerRef.current);
+  timerRef.current = null;
+  if (resumeTimerRef.current) clearInterval(resumeTimerRef.current);
+  resumeTimerRef.current = null;
+
+  // гарантированно новый сид
+  runIdRef.current += 1;
+  const seed = Date.now() + runIdRef.current + Math.floor(Math.random() * 1e9);
+  const limit = route.params?.limit ?? DEFAULT_LIMIT;
+  const qs = buildQuestions(seed, limit);
+
+  setQuestions(qs);
+  setIdx(0);
+  setScore(0);
+  setLives(route.params?.lives ?? DEFAULT_LIVES);
+  setSelected(null);
+  setLocked(false);
+  setTimeLeftMs(route.params?.timePerQuestionMs ?? DEFAULT_TIME_PER_Q_MS);
+  setCountdown(null);
+  setPaused(false);
+}, [buildQuestions, route.params]);
+
+
+  // Генерация при входе на экран
+  useFocusEffect(
+    useCallback(() => {
+      resetQuiz();
+      return () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = null;
+      };
+    }, [resetQuiz])
+  );
+
+  const q = questions[idx];
   const total = questions.length;
   const progress = total ? Math.min(100, Math.round(((idx + 1) / total) * 100)) : 0;
-
   const timePerQuestionMs = route.params?.timePerQuestionMs ?? DEFAULT_TIME_PER_Q_MS;
 
-  // таймер вопроса (если включён)
+  // Таймер вопроса (если включён)
   useEffect(() => {
     if (!q || paused || timePerQuestionMs <= 0) return;
 
@@ -135,42 +171,26 @@ export default function QuizScreen() {
     setLocked(true);
     setSelected(-1);
     setLives((L) => Math.max(0, L - 1));
-    setTimeout(() => {
-      goNext();
-    }, 700);
+    setTimeout(() => goNext(), 700);
   }, [q, locked]);
 
-  // навигация вопросов
   const goNext = useCallback(() => {
     setLocked(false);
     setSelected(null);
-    if (idx + 1 < total) {
-      setIdx((i) => i + 1);
-    } else {
-      // конец викторины
-      setPaused(true);
-    }
+    if (idx + 1 < total) setIdx((i) => i + 1);
+    else setPaused(true);
   }, [idx, total]);
 
-  // выбор ответа
   const choose = (i: number) => {
     if (!q || locked || paused) return;
     setLocked(true);
     setSelected(i);
-
     const correct = i === q.correctIndex;
-    if (correct) {
-      setScore((s) => s + 1);
-    } else {
-      setLives((L) => Math.max(0, L - 1));
-    }
-
-    setTimeout(() => {
-      goNext();
-    }, 700);
+    if (correct) setScore((s) => s + 1);
+    else setLives((L) => Math.max(0, L - 1));
+    setTimeout(() => goNext(), 700);
   };
 
-  // пауза/резюме с обратным отсчётом
   const togglePause = () => {
     if (!paused) {
       setPaused(true);
@@ -199,16 +219,10 @@ export default function QuizScreen() {
     nav.goBack();
   };
 
-  // автопауза при нуле жизней
   useEffect(() => {
     if (lives <= 0) setPaused(true);
   }, [lives]);
 
-  useEffect(() => {
-    setTick((t) => t ^ 1);
-  }, [paused, idx, lives, score, selected]);
-
-  // стили для вариантов
   const optionStyle = (i: number) => {
     const isSelected = selected === i;
     const isCorrect = q && i === q.correctIndex;
@@ -235,10 +249,7 @@ export default function QuizScreen() {
       }
     }
 
-    return {
-      container: { borderColor, backgroundColor: bg },
-      text: { color: text },
-    };
+    return { container: { borderColor, backgroundColor: bg }, text: { color: text } };
   };
 
   const ProgressBar = () => (
@@ -258,47 +269,39 @@ export default function QuizScreen() {
     <View style={styles.hud}>
       <Text style={styles.hudText}>Баллы: {score}</Text>
       <Text style={styles.hudText}>Жизни: {lives}</Text>
-      <Text style={styles.hudText}>Вопрос: {idx + 1}/{total}</Text>
+      <Text style={styles.hudText}>
+        Вопрос: {idx + 1}/{total}
+      </Text>
       {timePerQuestionMs > 0 && (
         <Text style={styles.hudText}>Таймер: {Math.ceil(timeLeftMs / 1000)}s</Text>
       )}
     </View>
   );
 
-  if (!q) {
+  if (!q)
     return (
       <SafeAreaView style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
         <ActivityIndicator />
         <Text style={{ marginTop: 12 }}>Загружаем вопросы…</Text>
       </SafeAreaView>
     );
-  }
 
-  const isFinished = (idx + 1 >= total) && paused;
+  const isFinished = idx + 1 >= total && paused;
   const isGameOver = lives <= 0;
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* HUD */}
       <HUD />
-
-      {/* Кнопка меню/пауза */}
       <Pressable onPress={togglePause} style={styles.menuBtn}>
         <Text style={{ fontSize: 22 }}>≡</Text>
       </Pressable>
-
-      {/* Прогресс */}
       <View style={{ paddingHorizontal: 16, marginTop: 8 }}>
         <ProgressBar />
       </View>
-
-      {/* Тело вопроса */}
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         <View style={[styles.card, { width: "100%" }]}>
           <Text style={styles.qText}>{q.q}</Text>
-
           <View style={{ height: 12 }} />
-
           {q.options.map((opt, i) => {
             const s = optionStyle(i);
             return (
@@ -318,17 +321,13 @@ export default function QuizScreen() {
           })}
         </View>
       </ScrollView>
-
-      {/* Пауза / Итог / Game Over */}
       {(paused || countdown !== null) && (
         <View style={styles.overlay}>
           <View style={styles.modalCard}>
             {countdown !== null ? (
               <>
                 <Text style={styles.modalTitle}>Продолжаем через</Text>
-                <Text style={{ fontSize: 64, fontWeight: "800", color: ACCENT }}>
-                  {countdown}
-                </Text>
+                <Text style={{ fontSize: 64, fontWeight: "800", color: ACCENT }}>{countdown}</Text>
               </>
             ) : isGameOver ? (
               <>
@@ -337,17 +336,7 @@ export default function QuizScreen() {
                 <Text style={[styles.modalText, { marginBottom: 12 }]}>
                   Вопросов пройдено: {idx}/{total}
                 </Text>
-                <Pressable
-                  onPress={() => {
-                    setScore(0);
-                    setLives(route.params?.lives ?? DEFAULT_LIVES);
-                    setIdx(0);
-                    setSelected(null);
-                    setLocked(false);
-                    setPaused(false);
-                  }}
-                  style={btnStyle()}
-                >
+                <Pressable onPress={resetQuiz} style={btnStyle()}>
                   <Text style={btnTextStyle()}>Играть снова</Text>
                 </Pressable>
                 <Pressable onPress={exit} style={btnStyle("outline")}>
@@ -357,21 +346,13 @@ export default function QuizScreen() {
             ) : isFinished ? (
               <>
                 <Text style={styles.modalTitle}>Викторина завершена!</Text>
-                <Text style={styles.modalText}>Баллы: {score} / {total}</Text>
+                <Text style={styles.modalText}>
+                  Баллы: {score} / {total}
+                </Text>
                 <Pressable onPress={exit} style={btnStyle()}>
                   <Text style={btnTextStyle()}>В меню</Text>
                 </Pressable>
-                <Pressable
-                  onPress={() => {
-                    setScore(0);
-                    setLives(route.params?.lives ?? DEFAULT_LIVES);
-                    setIdx(0);
-                    setSelected(null);
-                    setLocked(false);
-                    setPaused(false);
-                  }}
-                  style={btnStyle("outline")}
-                >
+                <Pressable onPress={resetQuiz} style={btnStyle("outline")}>
                   <Text style={btnTextStyle("outline")}>Сыграть ещё раз</Text>
                 </Pressable>
               </>
@@ -396,7 +377,7 @@ export default function QuizScreen() {
   );
 }
 
-// --- styles & helpers ------------------------------------------------------
+// --- styles ------------------------------------------------------
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
@@ -410,13 +391,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   hudText: { fontSize: 16, color: "#0f3c25", fontWeight: "600" },
-  menuBtn: {
-    position: "absolute",
-    right: 16,
-    top: 80,
-    padding: 10,
-    zIndex: 10,
-  },
+  menuBtn: { position: "absolute", right: 16, top: 80, padding: 10, zIndex: 10 },
   card: {
     backgroundColor: CARD,
     borderRadius: 18,
@@ -427,12 +402,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
-  qText: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: NEUTRAL,
-    lineHeight: 26,
-  },
+  qText: { fontSize: 20, fontWeight: "700", color: NEUTRAL, lineHeight: 26 },
   option: {
     borderWidth: 1,
     borderRadius: 14,
@@ -440,10 +410,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     marginTop: 10,
   },
-  optionText: {
-    fontSize: 16,
-    lineHeight: 22,
-  },
+  optionText: { fontSize: 16, lineHeight: 22 },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.35)",
@@ -470,15 +437,11 @@ const styles = StyleSheet.create({
     color: NEUTRAL,
     textAlign: "center",
   },
-  modalText: {
-    fontSize: 16,
-    color: "#333",
-    textAlign: "center",
-  },
+  modalText: { fontSize: 16, color: "#333", textAlign: "center" },
 });
 
 function btnStyle(variant: "solid" | "outline" = "solid") {
-  return ({
+  return {
     width: "100%",
     paddingVertical: 12,
     borderRadius: 999,
@@ -487,11 +450,11 @@ function btnStyle(variant: "solid" | "outline" = "solid") {
     alignItems: "center",
     marginTop: 10,
     backgroundColor: variant === "solid" ? ACCENT : "#fff",
-  } as const);
+  } as const;
 }
 function btnTextStyle(variant: "solid" | "outline" = "solid") {
-  return ({
+  return {
     color: variant === "solid" ? "#fff" : NEUTRAL,
     fontWeight: "700",
-  } as const);
+  } as const;
 }
