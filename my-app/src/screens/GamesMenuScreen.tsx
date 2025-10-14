@@ -40,7 +40,7 @@ export default function GamesMenuScreen() {
 
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         <Pill title="Отсортируй мусор" onPress={() => nav.navigate("CatchGame")} />
-        <Pill title="Викторина" onPress={() => {/* TODO: добавить экран викторины */}} />
+        <Pill title="Викторина" onPress={() => nav.navigate("Quiz")} />
       </View>
     </SafeAreaView>
   );
