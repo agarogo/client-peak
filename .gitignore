@@ -1,0 +1,71 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.eggs/
+.dist-info/
+build/
+dist/
+pip-wheel-metadata/
+
+# Виртуальные окружения
+.venv/
+venv/
+ENV/
+env/
+
+# Инструменты/кеши
+.mypy_cache/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+pytestdebug.log
+.pyre/
+.ruff_cache/
+.dmypy.json
+
+# Версии Python (pyenv/poetry)
+.python-version
+poetry.lock
+
+# --- Конфиги/секреты ---
+.env
+.env.*
+!.env.example           # шаблон оставляем в гите
+.env.docker             # среда для docker-compose (секреты/URL)
+
+# --- IDE/OS мусор ---
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# --- Docker ---
+# локальные оверрайды и артефакты
+docker-compose.override.yml
+*.log
+
+# --- Alembic ---
+# МИГРАЦИИ НУЖНО КОММИТИТЬ!
+# на всякий случай запрещаем игнор всей папки и явно разрешаем версии
+# (если где-то выше кто-то добавит alembic/ в игнор)
+!alembic/
+!alembic/versions/
+!alembic/versions/*.py
+
+# --- БД/дампы (мы используем Postgres в контейнере) ---
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.sql
+
+# --- Прочее ---
+.coveralls.yml
+.sentryclirc
