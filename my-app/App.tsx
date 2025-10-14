@@ -7,10 +7,15 @@ import AuthScreen from "./src/screens/AuthScreen";
 import HomeScreen from "./src/screens/HomeScreen";
 import GamesMenuScreen from "./src/screens/GamesMenuScreen";
 import CatchGameScreen from "./src/screens/CatchGameScreen";
+import QuizScreen from "@/screens/QuizScreen";
+import "./global.css"
 
 export type RootStackParamList = {
   Auth: undefined;
   Home: undefined;
+  GamesMenu: undefined;
+  CatchGame: undefined;
+  Quiz: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -34,6 +39,7 @@ export default function App() {
   }
 
   return (
+    
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName={initial}
@@ -45,8 +51,9 @@ export default function App() {
       >
         <Stack.Screen name="Auth" component={AuthScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="GamesMenu" component={GamesMenuScreen} />
-        <Stack.Screen name="CatchGame" component={CatchGameScreen} />
+        <Stack.Screen name ="GamesMenu" component={GamesMenuScreen} />
+        <Stack.Screen name ="CatchGame" component={CatchGameScreen} />
+        <Stack.Screen name="Quiz" component={QuizScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
