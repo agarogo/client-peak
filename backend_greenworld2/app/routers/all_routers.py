@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from . import users, auth_main, quizes, trees
+from . import users, auth_main, quizes, trees, tree_catalog
 from .quizes_ import games_router, import_router
 
 api_router = APIRouter()
@@ -15,3 +15,4 @@ api_router.include_router(import_router.router, prefix="/quizes/import", tags=["
 
 # trees
 api_router.include_router(trees.router, prefix="/trees", tags=["trees"])
+api_router.include_router(tree_catalog.router, tags=["tree-catalog"])

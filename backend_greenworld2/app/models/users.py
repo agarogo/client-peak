@@ -23,3 +23,4 @@ class User(Base):
         cascade="all, delete-orphan",
         passive_deletes=False,
     )
+    trees = relationship("Tree", back_populates="user")

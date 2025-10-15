@@ -5,7 +5,8 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from app.routers.all_routers import api_router
-from app.db.database import engine, Base
+from app.db.database import engine, Base, AsyncSessionLocal
+from app.crud import init_tree_catalog
 
 from dotenv import load_dotenv
 import os
@@ -15,7 +16,7 @@ load_dotenv()
 REDIS_URL = os.getenv("REDIS_URL")
 limiter = Limiter(key_func=get_remote_address, default_limits=["100 per minute"]) 
 
-app = FastAPI()
+app = FastAPI(swagger_ui_parameters={"oauth2RedirectUrl": None})
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -32,6 +33,9 @@ app.add_middleware(
 app.include_router(api_router)
 
 @app.on_event("startup")
-async def _create_all():
+async def create_all():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    async with AsyncSessionLocal() as db:
+        await init_tree_catalog(db)
