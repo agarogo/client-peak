@@ -1,4 +1,3 @@
-// src/screens/AuthScreen.tsx
 import React, { useRef, useState } from "react";
 import {
   Alert,
@@ -8,59 +7,17 @@ import {
   Platform,
   Text,
   TextInput,
+  Pressable,
   ActivityIndicator,
   View,
-  StyleSheet,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { DebugPillButton } from "../components/PillButton";
 
 const BASE_URL = "https://backoik-back.up.railway.app";
 type Mode = "login" | "register";
-
-// универсальная «кнопка» на чистом View
-function ViewButton({
-  title,
-  onPress,
-  disabled,
-  danger,
-  loading,
-}: {
-  title: string;
-  onPress: () => void;
-  disabled?: boolean;
-  danger?: boolean;
-  loading?: boolean;
-}) {
-  const [pressed, setPressed] = useState(false);
-  const bg = danger ? "#ffd6d6" : "#bfe5b4";
-  const bgPressed = danger ? "#ffcccc" : "#cdeec4";
-  const opacity = disabled ? 0.55 : 1;
-
-  return (
-    <View
-      style={[
-        styles.vBtn,
-        { backgroundColor: pressed ? bgPressed : bg, opacity },
-      ]}
-      onStartShouldSetResponder={() => !disabled}
-      onResponderGrant={() => !disabled && setPressed(true)}
-      onResponderRelease={() => {
-        if (disabled) return;
-        setPressed(false);
-        onPress();
-      }}
-      onResponderTerminate={() => setPressed(false)}
-    >
-      {loading ? (
-        <ActivityIndicator />
-      ) : (
-        <Text style={styles.vBtnText}>{title}</Text>
-      )}
-    </View>
-  );
-}
 
 export default function AuthScreen() {
   const navigation = useNavigation<any>();
@@ -72,28 +29,59 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
+  
 
   // Анимации (нативный драйвер)
   const scale = useRef(new Animated.Value(1)).current;
   const opacity = useRef(new Animated.Value(1)).current;
 
+  /** Простая анимация "уменьшилась и исчезла → увеличилась и появилась" */
   const animateSwitch = (next: Mode) => {
-    if (animating) return;
-    setAnimating(true);
-    Animated.parallel([
-      Animated.timing(scale, { toValue: 0.7, duration: 180, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-      Animated.timing(opacity, { toValue: 0, duration: 180, useNativeDriver: true }),
-    ]).start(() => {
-      setMode(next);
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(scale, { toValue: 1.05, duration: 220, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-          Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }),
-        ]),
-        Animated.timing(scale, { toValue: 1, duration: 100, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-      ]).start(() => setAnimating(false));
-    });
-  };
+  if (animating) return;
+  setAnimating(true);
+
+  // Фаза 1: уменьшиться и пропасть
+  Animated.parallel([
+    Animated.timing(scale, {
+      toValue: 0.7,
+      duration: 180,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }),
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 180,
+      useNativeDriver: true,
+    }),
+  ]).start(() => {
+    // Переключаем контент, когда он уже спрятан
+    setMode(next);
+
+    // Фаза 2: появиться и слегка «подпрыгнуть»
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(scale, {
+          toValue: 1.05,
+          duration: 220,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 100,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+    ]).start(() => setAnimating(false));
+  });
+};
+
 
   const onToggle = () => animateSwitch(mode === "login" ? "register" : "login");
 
@@ -127,8 +115,13 @@ export default function AuthScreen() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nickname, email, password,
-          test1_percentage: 0, test2_percentage: 0, test3_percentage: 0, test4_percentage: 0,
+          nickname,
+          email,
+          password,
+          test1_percentage: 0,
+          test2_percentage: 0,
+          test3_percentage: 0,
+          test4_percentage: 0,
         }),
       });
       const regData = await regRes.json().catch(() => ({}));
@@ -181,10 +174,9 @@ export default function AuthScreen() {
                   placeholderTextColor="#777"
                   style={styles.input}
                 />
-
-                {/* Кнопка ВОЙТИ на чистом View */}
-                <ViewButton title="войти" onPress={submitLogin} loading={loading} disabled={loading} />
-
+                
+                <DebugPillButton title="войти" onPress={submitLogin} />
+                
                 <Text style={styles.link} onPress={onToggle}>нет аккаунта? зарегаться</Text>
               </>
             ) : (
@@ -214,10 +206,7 @@ export default function AuthScreen() {
                   placeholderTextColor="#777"
                   style={styles.input}
                 />
-
-                {/* Кнопка РЕГИСТРАЦИЯ на чистом View */}
-                <ViewButton title="зарегаться" onPress={submitRegister} loading={loading} disabled={loading} />
-
+                <DebugPillButton title="зарегаться" onPress={submitRegister} />
                 <Text style={styles.link} onPress={onToggle}>уже есть? войти</Text>
               </>
             )}
@@ -228,7 +217,7 @@ export default function AuthScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   input: {
     marginVertical: 10,
     paddingVertical: 12,
@@ -236,30 +225,19 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: "#000000ff",
-    textAlign: "center",
+    textAlign: "center" as const,
   },
-  link: {
-    textAlign: "center",
-    marginTop: 16,
-    textDecorationLine: "underline",
-  },
-  vBtn: {
-    width: "100%",
-    paddingVertical: 14,
+  button: {
+    marginTop: 14,
+    paddingVertical: 12,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: "#222",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    alignItems: "center" as const,
   },
-  vBtnText: {
-    fontSize: 16,
-    fontWeight: "600",
+  link: {
+    textAlign: "center" as const,
+    marginTop: 16,
+    textDecorationLine: "underline" as const,
   },
-});
+};
